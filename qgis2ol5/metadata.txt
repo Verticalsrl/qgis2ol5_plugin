@@ -1,0 +1,40 @@
+# This file contains metadata for your plugin. Since 
+# version 2.0 of QGIS this is the proper way to supply 
+# information about a plugin. The old method of 
+# embedding metadata in __init__.py will 
+# is no longer supported since version 2.0.
+
+# This file should be included when you package your plugin.# Mandatory items:
+
+[general]
+name=qgis2ol5
+qgisMinimumVersion=2.14
+qgisMaximumVersion=3.99
+description=qgis2ol5
+version=0.1
+author=ar_gaeta@yahoo.it
+email=ar_gaeta@yahoo.it
+
+about=Salva il progetto QGis per renderlo disponibile su web tramite OpenLayers 5
+
+tracker=localhost
+repository=localhost
+# End of mandatory metadata
+
+# Recommended items:
+
+# Uncomment the following line and add your changelog:
+# changelog=
+
+# Tags are comma separated with spaces allowed
+tags=print, composer
+
+homepage=yahoo.com
+category=Plugins
+icon=hail.png
+# experimental flag
+experimental=True
+
+# deprecated flag (applies to the whole plugin, not just a single version)
+deprecated=False
+
