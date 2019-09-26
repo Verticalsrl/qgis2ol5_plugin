@@ -353,26 +353,32 @@ class qgis2ol5():
         
         #carico i layer di BASE - DA IMPLEMENTARE SECONDO LE SCELTE DELL'UTENTE!!!
         #inserisco all'inizio della lista layers_sciolti i layer di BASE
+        base_layers = []
         osm_base = self.dlg.osm_base.isChecked()
         if (osm_base==True):
             js_page_list.append(qgis2ol5_ol_layer.OSM_base)
             layers_sciolti.insert(0, 'OSM_base')
+            base_layers.append('OSM_base')
         osm_land = self.dlg.osm_land.isChecked()
         if (osm_land==True):
             js_page_list.append(qgis2ol5_ol_layer.OSM_land)
             layers_sciolti.insert(0, 'OSM_land')
+            base_layers.append('OSM_land')
         osm_gray = self.dlg.osm_gray.isChecked()
         if (osm_gray==True):
             js_page_list.append(qgis2ol5_ol_layer.Stamen_Toner)
             layers_sciolti.insert(0, 'Stamen_Toner')
+            base_layers.append('Stamen_Toner')
         esri_base = self.dlg.esri_base.isChecked()
         if (esri_base==True):
             js_page_list.append(qgis2ol5_ol_layer.ESRI_base)
             layers_sciolti.insert(0, 'ESRI_base')
+            base_layers.append('ESRI_base')
         esri_sat = self.dlg.esri_sat.isChecked()
         if (esri_sat==True):
             js_page_list.append(qgis2ol5_ol_layer.ESRI_sat)
             layers_sciolti.insert(0, 'ESRI_sat')
+            base_layers.append('ESRI_sat')
         
         #creo la variabile contenente tutti i layers "sciolti":
         #js_page_list.append("var layers = %s;" % ( (str([x.encode('UTF8') for x in layers_sciolti])).replace("'", "") )) #qgis 2.x
@@ -393,15 +399,19 @@ class qgis2ol5():
         canvas_center = self.iface.mapCanvas().center()
         canvas_center_x = canvas_center.x()
         canvas_center_y = canvas_center.y()
-        
+
         mappa_var_compilata = qgis2ol5_ol_layer.mappa_var % {'maxzoom': self.dlg.maxzoom_comboBox.currentText(), 'minzoom': self.dlg.minzoom_comboBox.currentText(), 'extent': canvas_extent, 'center_x': canvas_center_x, 'center_y': canvas_center_y }
         js_page_list.append(mappa_var_compilata)
         
+        restricted = False
         restrict_extent = self.dlg.restrict_extent.isChecked()
         if (restrict_extent==True):
             zoom_restrict_compilata = qgis2ol5_ol_layer.zoom_restrict % { 'maxzoom': self.dlg.maxzoom_comboBox.currentText(), 'minzoom': self.dlg.minzoom_comboBox.currentText(), 'extent': canvas_extent, 'center_x': canvas_center_x, 'center_y': canvas_center_y }
             js_page_list.append(zoom_restrict_compilata)
+            restricted = True
             
+        map_var = {'maxzoom': self.dlg.maxzoom_comboBox.currentText(), 'minzoom': self.dlg.minzoom_comboBox.currentText(), 'extent': canvas_extent, 'center_x': canvas_center_x, 'center_y': canvas_center_y, 'restrict_extent': restricted } #creo un dictionary per json
+
         zoom_var_compilata = qgis2ol5_ol_layer.zoom_var % { 'extent': canvas_extent }
         js_page_list.append(zoom_var_compilata)        
         js_page_list.append(qgis2ol5_ol_layer.other_controls)
@@ -448,6 +458,7 @@ class qgis2ol5():
         
         #PER SCRIVERE IL FILE RICORDA:
         #1-controllare che il file non esista e se si chiedere conferma all'utente
+        #2-nel JSON mancano info su: controlli mappa...
         
         #io ho raccolto tutte queste informazioni in un singolo dictionary:
         j = json.dumps(layers_to_load, indent=4)
@@ -470,9 +481,29 @@ class qgis2ol5():
         else:
             print >> f, j
         f.write("\n")
-        f.write("}") #chiudo il json
         #f.close()
+
+        f.write(',"qgis_project_url":"'+qgis_project_url+'"')
+        f.write("\n")
         
+        j = json.dumps(base_layers, indent=4)
+        f.write(',"base_layers":')
+        if (int(qgis_version[0]) >= 3):
+            print(j, end="", file=f)
+        else:
+            print >> f, j
+        f.write("\n")
+
+        j = json.dumps(map_var, indent=4)
+        f.write(',"map":')
+        if (int(qgis_version[0]) >= 3):
+            print(j, end="", file=f)
+        else:
+            print >> f, j
+        f.write("\n")
+
+        f.write("}") #chiudo il json
+
         #f.write(js_page_string) #da indicazioni di MOCCO scrivo solo un json
         f.close()
         
