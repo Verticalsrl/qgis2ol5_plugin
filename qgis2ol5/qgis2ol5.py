@@ -228,7 +228,7 @@ class qgis2ol5():
             self.dlg.txtFeedback.setText('Errore di sistema!')
             return 0
         else: #...se tutto ok proseguo:
-            pathfile = dirname_text + '/' + nome + '.js'
+            pathfile = dirname_text + '/' + nome + '.json'
             if (os.path.exists(pathfile) and  os.path.isfile(pathfile)):
                 msg.setText("ATTENZIONE! Il file indicato per l'esportazione e' gia' presente su disco: si desidera sovrascriverlo?")
                 msg.setIcon(QMessageBox.Warning)
@@ -452,25 +452,28 @@ class qgis2ol5():
         #io ho raccolto tutte queste informazioni in un singolo dictionary:
         j = json.dumps(layers_to_load, indent=4)
         f = open(pathfile, 'w')
-        f.write("layers_to_load = ")
+        #f.write("layers_to_load = ") #da indicazioni di MOCCO scrivo solo un json
+        f.write('{"layers_to_load":')
         if (int(qgis_version[0]) >= 3):
             print(j, end="", file=f)
         else:
             print >> f, j
-        f.write(";\n")
+        f.write("\n")
         #f.close()
         
         j = json.dumps(groups, indent=4)
         #f = open(pathfile, 'a')
-        f.write("groups = ")
+        #f.write("groups = ") #da indicazioni di MOCCO scrivo solo un json
+        f.write(',"groups":')
         if (int(qgis_version[0]) >= 3):
             print(j, end="", file=f)
         else:
             print >> f, j
-        f.write(";\n")
+        f.write("\n")
+        f.write("}") #chiudo il json
         #f.close()
         
-        f.write(js_page_string)
+        #f.write(js_page_string) #da indicazioni di MOCCO scrivo solo un json
         f.close()
         
     

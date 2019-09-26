@@ -11,27 +11,30 @@ name=qgis2ol5
 qgisMinimumVersion=2.14
 qgisMaximumVersion=3.99
 description=qgis2ol5
-version=0.1
-author=ar_gaeta@yahoo.it
-email=ar_gaeta@yahoo.it
+version=0.2
+author=A.R.Gaeta/Vertical Srl
+email=info@vertical.digital
+release_date=2019/09/01
 
 about=Salva il progetto QGis per renderlo disponibile su web tramite OpenLayers 5
 
-tracker=localhost
-repository=localhost
+tracker=github.com
+repository=github.com
 # End of mandatory metadata
 
 # Recommended items:
 
 # Uncomment the following line and add your changelog:
-# changelog=
+changelog=
+    2019/09/26 0.2 Estrae solo un file json da processare per comporre la mappa su OL5
+    2019/09/01 0.1 Prima versione del plugin. Estrae un file javascript direttamente interpretabile da OL5. Per il momento la versione non e' compatibile con QGis 2.x
 
 # Tags are comma separated with spaces allowed
-tags=print, composer
+tags=webgis, OpenLayers, qgis2ol
 
-homepage=yahoo.com
+homepage=http://vertical.digital/
 category=Plugins
-icon=hail.png
+icon=qgis2ol5.png
 # experimental flag
 experimental=True
 
