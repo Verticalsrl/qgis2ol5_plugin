@@ -260,6 +260,7 @@ class qgis2ol5():
     def esporta_json(self, pathfile):
         #Utils.logMessage('numero di layer da configurare: ' + str(self.dlg.layersTree.topLevelItemCount())) #da un numero scorretto
         root = QgsProject.instance().layerTreeRoot()
+        #tree_layers = root.findLayers() #questo metodo recupera SOLO i layers, NON i gruppi
         global layers_in_TOC
         layers_in_TOC = []
         self.count_layers_in_TOC(root)
@@ -701,11 +702,12 @@ class qgis2ol5():
         """Populate layers on QGIS into our layers and group tree view."""
         root_node = QgsProject.instance().layerTreeRoot()
         tree_groups = []
-        tree_layers = root_node.findLayers()
+        tree_layers = root_node.findLayers() #questo metodo recupera SOLO i layers, NON i gruppi
         self.layers_item = QTreeWidgetItem()
         self.groups_item = QTreeWidgetItem()
         self.layers_item.setText(0, "Layers and Groups")
         self.dlg.layersTree.setColumnCount(3)
+        msg = QMessageBox()
 
         numero_layers = len(tree_layers)
         #qui inizio a prendere un layer alla volta e a costruirgli il form da configurare
@@ -734,20 +736,35 @@ class qgis2ol5():
                         item = TreeLayerItem(self.iface, layer, self.dlg.layersTree, dlg)
                         self.layers_item.addChild(item)
                     else:
-                        if layer_parent not in tree_groups: #sposta il layer all'interno del gruppo
+                        if layer_parent not in tree_groups: #sposta il parent del layer all'interno dei gruppi se ancora non c'e'
                             tree_groups.append(layer_parent)
                 except:
                     #QgsMessageLog.logMessage(traceback.format_exc(), "qgis2ol5", level=QgsMessageLog.CRITICAL)
                     QgsMessageLog.logMessage(traceback.format_exc(), "qgis2ol5", level=critical_level)
 
         #costruisco l'albero dei gruppi
+        check_gruppo_annidato = 0
         for tree_group in tree_groups:
             group_name = tree_group.name()
-            group_layers = [tree_layer.layer() for tree_layer in tree_group.findLayers()]
+            #cerco se all'interno di questo gruppo non vi sia un altro gruppo OVVERO ciclo all'interno dei suoi layer nel caso vi siano dei layer che ppartengono al gruppo annidato:
+            group_layers = [] #in questo caso la lista la costruisco io
+            for layeringroup in tree_group.findLayers():
+                if layeringroup.parent().name() == group_name:
+                    group_layers.append(layeringroup.layer())
+                else:
+                    Utils.logMessage("ATTENZIONE! Il gruppo " + group_name + " contiene il gruppo " + layeringroup.parent().name())
+                    check_gruppo_annidato = 1
+            #group_layers = [tree_layer.layer() for tree_layer in tree_group.findLayers()] #questo metodo findLayers NON VA BENE nel caso in cui vi siano dei gruppi dentro altri gruppi!
             Utils.logMessage("layer nei gruppi: " + str(len(group_layers)))
             #a differenza del plugin qgis2web anche all'interno dei gruppi faccio scegliere l'opzione sui singoli layers:
             item = TreeGroupItem(group_name, group_layers, self.dlg.layersTree, self.iface, dlg)
             self.layers_item.addChild(item)
+        if (check_gruppo_annidato==1):
+            msg.setText("ATTENZIONE! E' stata rilevata la presenza di gruppi annidati in altri gruppi\nI gruppi annidati potrebbero creare dei problemi in una corretta resa del progetto via Web.\nVerificare che l'albero dei layer in 'Opzioni layers' venga compilato correttamente.")
+            msg.setWindowTitle("Gruppi annidati")
+            msg.setIcon(QMessageBox.Information)
+            msg.setStandardButtons(QMessageBox.Ok)
+            retval = msg.exec_()
 
         self.dlg.layersTree.addTopLevelItem(self.layers_item)
         self.dlg.layersTree.expandAll()
@@ -771,10 +788,11 @@ class qgis2ol5():
         cluster = []
         getFeatureInfo = []
         layers_to_load = dict() #mio dizionario
+        layer_in_gruppo_da_non_esportare = []
         for i in xrange(self.layers_item.childCount()):
             item = self.layers_item.child(i)
-            if isinstance(item, TreeLayerItem):
-                if item.checkState(0) == Qt.Checked:
+            if isinstance(item, TreeLayerItem): #qui analizzo i layer
+                if item.checkState(0) == Qt.Checked: #recupero solo quei layer che l'utente ha deciso di esportare
                     layers.append(item.layer)
                     popup.append(item.popup)
                     visible.append(item.visible)
@@ -799,14 +817,14 @@ class qgis2ol5():
                     layers_to_load[layername_unique]['select'] = item.select
                     layers_to_load[layername_unique]['hover'] = item.hover
                     layers_to_load[layername_unique]['order'] = layers_in_TOC[::-1].index(item.layer.name())
-            else:
+            else: #qui (forse) analizzo i gruppi
                 #devo cercare di prendere i child del gruppo:
                 Utils.logMessage( "Numero di layer dentro al gruppo: " + str(item.childCount()) ) #non e' corretto!
                 #ripeto un po quanto fatto prima sui singoli layer
                 for ii in xrange(item.childCount()):
                     subitem = item.child(ii)
                     if isinstance(subitem, TreeLayerItem):
-                        if subitem.checkState(0) == Qt.Checked:
+                        if subitem.checkState(0) == Qt.Checked: #recupero solo quei layer che l'utente ha deciso di esportare
                             layers.append(subitem.layer)
                             popup.append(subitem.popup)
                             visible.append(subitem.visible)
@@ -830,13 +848,17 @@ class qgis2ol5():
                             layers_to_load[layername_unique]['select'] = subitem.select
                             layers_to_load[layername_unique]['hover'] = subitem.hover
                             layers_to_load[layername_unique]['order'] = layers_in_TOC[::-1].index(subitem.layer.name())
+                        else: #questi sono i layer DENTRO ad un GRUPPO che l'utente ha scelto di NON esportare: li tengo da parte cosi' da toglierli dalla lista dei layers contenuti nei gruppi
+                            layer_in_gruppo_da_non_esportare.append(subitem.layer.id())
                 
                 group = item.name
                 groupLayers = []
-                if item.checkState(0) != Qt.Checked:
+                if item.checkState(0) != Qt.Checked: #se ho deciso di NON esportare il gruppo lo salto
                     continue
-                for layer in item.layers:
+                for layer in item.layers: #questi sono i layers contenuti nel gruppo in questione
                     #groupLayers.append(layer)
+                    if (layer.id() in layer_in_gruppo_da_non_esportare): #escludo dal gruppo i layer che ho deciso di non esportare
+                        continue
                     layers.append(layer)
                     #prelevo il nome del layer in modo che sia uguale al layer definito in layers_to_load
                     #groupLayers.append(layer.name())
@@ -906,6 +928,10 @@ class qgis2ol5():
         self.dlg.dirBrowse_txt.setText(dirname)
         self.dlg.titolo.setText(project_name)
         self.dlg.nome.setText(project_name)
+        
+        #pulisco la barra di progressione e l'area di testo per il feedback:
+        self.dlg.export_progressBar.setValue(0)
+        self.dlg.txtFeedback.clear()
         
         #Ricarico il tree dei layer
         self.dlg.layersTree.clear() #in questo modo pero ogni volta perdi tutte le modifiche!
@@ -991,17 +1017,24 @@ class TreeLayerItem(QTreeWidgetItem):
         self.setText(0, layer.name())
         self.setIcon(0, self.layerIcon)
         project = QgsProject.instance()
-        if project.layerTreeRoot().findLayer(layer.id()).isVisible():
-            self.setCheckState(0, Qt.Checked)
-        else:
-            self.setCheckState(0, Qt.Unchecked)
+        #di default esporto TUTTO
+        self.setCheckState(0, Qt.Checked)
+        #e pongo a "visible" cio' che lo e' sulla TOC
         self.visibleItem = QTreeWidgetItem(self)
         self.visibleCheck = QCheckBox()
-        vis = layer.customProperty("qgis2ol5/Visible", True)
-        if (vis == 0 or unicode(vis).lower() == "false"):
-            self.visibleCheck.setChecked(False)
-        else:
+        if project.layerTreeRoot().findLayer(layer.id()).isVisible():
+            #self.setCheckState(0, Qt.Checked)
             self.visibleCheck.setChecked(True)
+        else:
+            #self.setCheckState(0, Qt.Unchecked)
+            self.visibleCheck.setChecked(False)
+        #self.visibleItem = QTreeWidgetItem(self)
+        #self.visibleCheck = QCheckBox()
+        #vis = layer.customProperty("qgis2ol5/Visible", True) #ma questo cosa faceva??
+        #if (vis == 0 or unicode(vis).lower() == "false"):
+        #    self.visibleCheck.setChecked(False)
+        #else:
+        #    self.visibleCheck.setChecked(True)
         self.visibleItem.setText(0, "Visible")
         self.addChild(self.visibleItem)
         tree.setItemWidget(self.visibleItem, 1, self.visibleCheck)
