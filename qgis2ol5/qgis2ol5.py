@@ -34,19 +34,16 @@ Pero' non prende i valori!!!
 
 
 
-OTTIMIZZAZIONI/DA FARE:
+OTTIMIZZAZIONI/DA FARE: ==> alcuni appinti potrebbero NON essere piu' validi nel momento in cui il plugin esporta non piu' il file javascript ma SOLO il JSON
 
 - il layerTree non viene ricostruito, bisogna ricaricare il plugin, altrimenti sotto __init__ la funzione populate_layers_and_groups pare non venga richiamata. Potrebbe venir richiamata sotto "run()", ma in questo modo ricaricherebbe ogni volta il layerTree cancellando le modifiche effettuate...
 ==> PRENDI SPUNTO DA qgis2web.py!!  --> impossibile da replicare....
 
 - cancellare tutto il precedente codice relativo alla stampa dell'Atlas
 
-- quando crei la variabile layers_to_load, se l'utente decide di non esportare un layer che e' in un gruppo, sfortunatamente questo layer comparira sempre nel dictionary groups, ma non nel dictionary layers_to_load: dare precedenza dunque a questa variabile
-
 - migliorare la gestione dei layer di base: occorre chiedere all'utente quale layer di base vuole visualizzare di default
 
 - I PUNTI non possono essere resi come TILE!!
-
 
 - SELECT: aggiungerei per ogni layer non esterno la possibilita' di scegliere se interrogarlo o meno (dunque attivare il select o meno), se attivare o meno l'hover (con un'apertura minima del popup cioe' ad esempio solo UN campo). I layer scelti per essere interrogati confluiranno nella variabiale:
 var layersList = [baseLayer,lyr_limiti_ammviPG96_0,lyr_limiti_ammviGPKG_1,lyr_risval_istanze_2];
@@ -62,7 +59,7 @@ Quindi bisogna trovare un modo per escludere i campi che non si vogliono far ved
 lyr_RISVAList_0.set('fieldAliases', {...etc...   ---> vedi qgis2web - layers.js
 
 Come viene fatto su qgis2web??
-NB: sebbene abbia gia' imbastito i campi per permettere di scegliere quale layer seleizonare o hoverare, occhio che qgis2web interroga i GEOJSON e NON i WMS come nel tuo caso.
+NB: sebbene abbia gia' imbastito i campi per permettere di scegliere quale layer selezionare o hoverare, occhio che qgis2web interroga i GEOJSON e NON i WMS come nel tuo caso.
 Potresti comunque copiare la parte in cui assegna uno stile ai GeoJson cioe' sotto layers e sotto styles
 
 
@@ -70,7 +67,6 @@ Potresti comunque copiare la parte in cui assegna uno stile ai GeoJson cioe' sot
 INCOMPATIBILITA con Qgis 2.x
 Per quanto abbia cercato di renderlo funzionante anche per QGis 2.x ci sono ancora alcune cose che non funzionano:
 - l'elenco dei fields per i layer, in particolare il riconoscimento corretto del valore di test_goodlayer, suppongo
-
 
 
 '''
@@ -469,7 +465,8 @@ class qgis2ol5():
         if (int(qgis_version[0]) >= 3):
             print(j, end="", file=f)
         else:
-            print >> f, j
+            #print >> f, j #importando from __future__ import print_function questa funzione non vale piu' nemmeno per QGis 2.x
+            print(j, end="", file=f)
         f.write("\n")
         #f.close()
         
@@ -480,7 +477,8 @@ class qgis2ol5():
         if (int(qgis_version[0]) >= 3):
             print(j, end="", file=f)
         else:
-            print >> f, j
+            #print >> f, j
+            print(j, end="", file=f)
         f.write("\n")
         #f.close()
 
@@ -492,7 +490,8 @@ class qgis2ol5():
         if (int(qgis_version[0]) >= 3):
             print(j, end="", file=f)
         else:
-            print >> f, j
+            #print >> f, j
+            print(j, end="", file=f)
         f.write("\n")
 
         j = json.dumps(map_var, indent=4)
@@ -500,7 +499,8 @@ class qgis2ol5():
         if (int(qgis_version[0]) >= 3):
             print(j, end="", file=f)
         else:
-            print >> f, j
+            #print >> f, j
+            print(j, end="", file=f)
         f.write("\n")
 
         f.write("}") #chiudo il json
@@ -779,6 +779,26 @@ class qgis2ol5():
             #io pero' li voglio tutti collapsed:
             item.setExpanded(False)
     
+    def get_layers_custom_order(self):
+        bridge = self.iface.layerTreeCanvasBridge() 
+        if (int(qgis_version[0]) >= 3):
+            if (bridge.rootGroup().hasCustomLayerOrder()):
+                QgsVectorLayer_type = bridge.rootGroup().customLayerOrder()
+            else:
+                QgsVectorLayer_type = bridge.rootGroup().layerOrder()
+            layers_id_order = []
+            for el in QgsVectorLayer_type:
+                layers_id_order.append(el.id())
+            return layers_id_order
+        else:
+            if (bridge.hasCustomLayerOrder()):
+                return bridge.customLayerOrder()
+            else:
+                return bridge.defaultLayerOrder()
+        #converto questa lista unicode in stringa:
+        #layers_custom_order = [str(r) for r in layers_custom_order]
+        #Utils.logMessage('ordine layer custom 1: ' + str(layers_custom_order))
+    
     def getLayersAndGroups(self):
         layers = []
         groups = {}
@@ -789,6 +809,11 @@ class qgis2ol5():
         getFeatureInfo = []
         layers_to_load = dict() #mio dizionario
         layer_in_gruppo_da_non_esportare = []
+        #se esiste, prelevo l'ordine custom dell'utente
+        global layers_custom_order
+        #layers_custom_order = []
+        layers_custom_order = self.get_layers_custom_order()
+        Utils.logMessage('ordine layer custom 2: ' + str(layers_custom_order))
         for i in xrange(self.layers_item.childCount()):
             item = self.layers_item.child(i)
             if isinstance(item, TreeLayerItem): #qui analizzo i layer
@@ -816,7 +841,9 @@ class qgis2ol5():
                     layers_to_load[layername_unique]['tiled'] = item.tiled
                     layers_to_load[layername_unique]['select'] = item.select
                     layers_to_load[layername_unique]['hover'] = item.hover
-                    layers_to_load[layername_unique]['order'] = layers_in_TOC[::-1].index(item.layer.name())
+                    #layers_to_load[layername_unique]['order'] = layers_in_TOC[::-1].index(item.layer.name())
+                    #in layers_custom_order il nome del layer viene salvato con un suffisso, forse per renderlo univoco. Devo quindi fare un trucchetto per ritrovare i miei layer: recupero ID del layer invece che il nome
+                    layers_to_load[layername_unique]['order'] = layers_custom_order[::-1].index(item.layer.id())
             else: #qui (forse) analizzo i gruppi
                 #devo cercare di prendere i child del gruppo:
                 Utils.logMessage( "Numero di layer dentro al gruppo: " + str(item.childCount()) ) #non e' corretto!
@@ -847,7 +874,9 @@ class qgis2ol5():
                             layers_to_load[layername_unique]['tiled'] = subitem.tiled
                             layers_to_load[layername_unique]['select'] = subitem.select
                             layers_to_load[layername_unique]['hover'] = subitem.hover
-                            layers_to_load[layername_unique]['order'] = layers_in_TOC[::-1].index(subitem.layer.name())
+                            #layers_to_load[layername_unique]['order'] = layers_in_TOC[::-1].index(subitem.layer.name())
+                            #in layers_custom_order il nome del layer viene salvato con un suffisso, forse per renderlo univoco. Devo quindi fare un trucchetto per ritrovare i miei layer: recupero ID del layer invece che il nome
+                            layers_to_load[layername_unique]['order'] = layers_custom_order[::-1].index(subitem.layer.id())
                         else: #questi sono i layer DENTRO ad un GRUPPO che l'utente ha scelto di NON esportare: li tengo da parte cosi' da toglierli dalla lista dei layers contenuti nei gruppi
                             layer_in_gruppo_da_non_esportare.append(subitem.layer.id())
                 

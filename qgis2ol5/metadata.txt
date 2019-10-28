@@ -11,7 +11,7 @@ name=qgis2ol5
 qgisMinimumVersion=2.14
 qgisMaximumVersion=3.99
 description=qgis2ol5
-version=0.2
+version=0.3
 author=A.R.Gaeta/Vertical Srl
 email=info@vertical.digital
 release_date=2019/09/01
@@ -26,6 +26,7 @@ repository=github.com
 
 # Uncomment the following line and add your changelog:
 changelog=
+	2019/10/28 0.3 Recupera ordine dei layer dal Layer Order Panel se l'utente ha deciso un diverso ordine dei layers
     2019/09/26 0.2 Estrae solo un file json da processare per comporre la mappa su OL5
     2019/09/01 0.1 Prima versione del plugin. Estrae un file javascript direttamente interpretabile da OL5. Per il momento la versione non e' compatibile con QGis 2.x
 

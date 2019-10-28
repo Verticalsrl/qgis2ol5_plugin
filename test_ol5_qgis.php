@@ -1,6 +1,8 @@
 <?php
 //Carico il progetto in PHP nella speranza che non faccia la cache ne' del progetto ne' dei js ad esso collegati...altrimenti e' un incubo!
 
+//==> ad un certo punto dal plugin produco solo un JSON e non piu' dei file javascript pronti per essere letti da OL5 in quanto l'interfaccia web verrà implementata interamente da Alessandro: questo php NON SERVE PIU' a niente
+
 
 date_default_timezone_set('UTC');
 

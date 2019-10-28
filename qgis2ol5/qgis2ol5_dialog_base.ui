@@ -360,7 +360,7 @@ configurazione del progetto
                   <enum>QFrame::Box</enum>
                  </property>
                  <property name="text">
-                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;NOTA BENE: copiare sul server che fornisce il servizio qgis-server:&lt;br&gt;1- il file di progetto qgis con estensione .qgs nel percorso specificato sopra in &amp;quot;map=&amp;quot;&lt;br&gt;2-- copiare il file &amp;quot;&amp;lt;nome_rpogetto&amp;gt;.js&amp;quot;, creato da questo plugin, nel percorso sul server &lt;br&gt; &amp;quot;/var/www/html/qgis_progetti_js&amp;quot;&lt;/p&gt;&lt;p&gt;Per aprire il progetto sul server, digitare da browser l'url:&lt;br&gt;&lt;a href=&quot;http://10.127.152.10/&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;http://&lt;/span&gt;&lt;/a&gt;&amp;lt;nome_server&amp;gt;/test_ol5_qgis.php?progetto=&amp;lt;nome_progetto&amp;gt;&lt;/p&gt;&lt;p&gt;In caso di problemi contattatre l'amministratore.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;NOTA BENE: copiare sul server che fornisce il servizio qgis-server:&lt;br/&gt;1- il file di progetto qgis con estensione .qgs nel percorso specificato sopra in &amp;quot;map=&amp;quot;&lt;br/&gt;2- copiare il file &amp;quot;&amp;lt;nome_progetto&amp;gt;.json&amp;quot;, creato da questo plugin, nel percorso sul server &lt;br/&gt;&amp;quot;/var/www/html/&amp;lt;nome_progetto&amp;gt;&amp;quot;&lt;/p&gt;&lt;p&gt;In caso di problemi contattatre l'amministratore.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                 </widget>
                </widget>
@@ -384,8 +384,8 @@ configurazione del progetto
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>463</width>
-                 <height>403</height>
+                 <width>102</width>
+                 <height>32</height>
                 </rect>
                </property>
                <layout class="QVBoxLayout" name="verticalLayout_26">
